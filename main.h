@@ -14,5 +14,5 @@
 char *_getenv(const char *name);
 char *get_command(char *command);
 
-#endiif
+#endif
 
