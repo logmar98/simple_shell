@@ -41,14 +41,26 @@ arr[i] = NULL;
 pid = fork(); 
 if (pid == 0)
 {
-    cmd = get_command(arr[0]);
+   
+        if (access(arr[0], F_OK) == 0)
+        {
+            cmd = arr[0];
+        }
+        else
+        {
+           
+
+            cmd = get_command(arr[0]);
+        }
+
     if (cmd)
     {
         execve(cmd, arr,env);
+            
     }
     else
     {
-        printf("command not found \n");
+        printf("%s: 1: %s: not found\n", av[0], arr[0] );
     }
     _exit(0);
 }
@@ -59,3 +71,4 @@ free(arr);
 }
 return (0);
 }
+
