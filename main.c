@@ -2,73 +2,48 @@
 
 int main(int ac, char **av, char **env)
 {
-char *buffer = NULL;
-size_t buffer_size = 0;
-int n_char, stat, i = 0;
+char *buff = NULL;
+size_t buff_size;
+int n_char, i = 0, status;
 char *token;
-char *cmd;
-char **arr;
+char **tokens;
 pid_t pid;
 (void)ac;
 (void)av;
-
+(void)env;
 while (1)
 {
-write(1, "$ ", 2);
-n_char = getline(&buffer, &buffer_size, stdin);
-if (n_char == -1)
-{
-    write(1, "\n", 1);
-    perror("getline");
-    _exit(1);
-}
-arr = malloc(sizeof(char *) * 1024);
-token = strtok(buffer, " \t\n");
-while (token)
-{
-    arr[i] = token;
-    token = strtok(NULL, " \t\n");
-    i++;
-}
-
-
-if (strcmp(arr[0], "exit") == 0)
-{
-    printf("exiting shell\n");
-    _exit(0);
-}
-arr[i] = NULL;
-pid = fork(); 
-if (pid == 0)
-{
-   
-        if (access(arr[0], F_OK) == 0)
-        {
-            cmd = arr[0];
-        }
-        else
-        {
-           
-
-            cmd = get_command(arr[0]);
-        }
-
-    if (cmd)
+    write(1, "$ ", 2);
+    n_char = getline(&buff, &buff_size, stdin);
+    tokens = malloc(sizeof(char *) * 1024);
+    token = strtok(buff, " \t\n");
+    if (n_char == EOF)
     {
-        execve(cmd, arr,env);
-            
+        write(1, "\n", 1);
+        exit(1);
+    }
+
+    while (token)
+    {
+        tokens[i] = token;
+        token = strtok(NULL, " \t\n");
+        i++;
+    }
+    tokens[i] = NULL;
+    pid = fork();
+    if (pid == 0)
+    {    
+        if (execve(tokens[0], tokens, NULL) == -1)
+        {
+            printf("%s: 1: %s: not found\n", av[0], tokens[0]);
+        }
     }
     else
-    {
-        printf("%s: 1: %s: not found\n", av[0], arr[0] );
-    }
-    _exit(0);
-}
-else
-    wait(&stat);
-i = 0;
-free(arr);
-}
-return (0);
+        wait(&status);
+    i = 0;
+    free(tokens);
+    
 }
 
+return (0);
+}
