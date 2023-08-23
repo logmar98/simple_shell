@@ -1,49 +1,52 @@
 #include "main.h"
-
-int main(int ac, char **av, char **env)
+/**
+  * main - main shell
+  *
+  * Return: 0
+  */
+int main(int ac __attribute__((unused)), char **av, char *env[])
 {
-char *buff = NULL;
-size_t buff_size;
-int n_char, i = 0, status;
-char *token;
-char **tokens;
-pid_t pid;
-(void)ac;
-(void)av;
-(void)env;
-while (1)
-{
-    write(1, "$ ", 2);
-    n_char = getline(&buff, &buff_size, stdin);
-    tokens = malloc(sizeof(char *) * 1024);
-    token = strtok(buff, " \t\n");
-    if (n_char == EOF)
-    {
-        write(1, "\n", 1);
-        exit(1);
-    }
-
-    while (token)
-    {
-        tokens[i] = token;
-        token = strtok(NULL, " \t\n");
-        i++;
-    }
-    tokens[i] = NULL;
-    pid = fork();
-    if (pid == 0)
-    {    
-        if (execve(tokens[0], tokens, NULL) == -1)
-        {
-            printf("%s: 1: %s: not found\n", av[0], tokens[0]);
-        }
-    }
-    else
-        wait(&status);
-    i = 0;
-    free(tokens);
-    
+	char *buf = NULL;
+	size_t buf_size = 0;
+	int status;
+	pid_t pid;
+	char **arr;
+	while (1)
+	{
+		if (isatty(STDIN_FILENO))
+			write(1, "$ ", 2);
+		if (getline(&buf, &buf_size, stdin) == -1)
+			break;
+		if (buf == NULL)
+			exit(0);
+		arr = str_spliter(buf);
+		if (!arr[0])
+		{
+			free(arr);
+			continue;
+		}
+		if (_strcmp(arr[0], "env") == 0)
+		{
+			prt_env(), free(arr);
+			continue;
+		}
+		if (_strcmp(arr[0], "exit") == 0)
+			free(arr), free(buf), exit(0);
+		pid = fork();
+		if (pid == 0)
+		{
+			if (_strchr(arr[0], '/') == NULL)
+				arr[0] = path_handler(arr[0]);
+			if (execve(arr[0], arr, env))
+			{
+				printf("%s: 1: %s: not found", av[0], arr[0]);
+				exit(EXIT_FAILURE);
+				break;
+			}
+		}
+		wait(&status), free(arr);
+	}
+	free(buf);
+	return (0);
 }
 
-return (0);
-}
